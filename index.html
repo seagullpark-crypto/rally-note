@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ラリーノート</title>
+<meta name="description" content="ソフトテニスの練習とメンタルを記録して振り返るアプリ">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#1d6b47">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ラリーノート">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow column like a scorebook, sticky tab bar, court-green ink on line-white paper */
+:root{
+  --bg:#f3f5f1; --paper:#ffffff; --ink:#18241e; --muted:#5f6d65; --line:#d9e0da;
+  --court:#1d6b47; --court-soft:#e2efe7; --clay:#b4572e; --clay-soft:#f6e6dd;
+  --good:#1d7a4c; --mid:#b07a12; --low:#b23a2e; --mid-soft:#f6edd9;
+  --f-display:"Dela Gothic One","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,"SFMono-Regular",monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111814; --paper:#18221c; --ink:#e6ede8; --muted:#97a69d; --line:#2c3a32;
+  --court:#5cc493; --court-soft:#1d3428; --clay:#e08a5f; --clay-soft:#3a261c;
+  --good:#5cc493; --mid:#e0b04f; --low:#ef7d70; --mid-soft:#3a3120; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111814; --paper:#18221c; --ink:#e6ede8; --muted:#97a69d; --line:#2c3a32;
+  --court:#5cc493; --court-soft:#1d3428; --clay:#e08a5f; --clay-soft:#3a261c;
+  --good:#5cc493; --mid:#e0b04f; --low:#ef7d70; --mid-soft:#3a3120; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 64px}
+header.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:8px 4px}
+.brand{font-family:var(--f-display);font-size:22px;letter-spacing:.02em;color:var(--court);margin:0}
+.brand small{display:block;font-family:var(--f-body);font-size:12px;color:var(--muted);letter-spacing:.08em}
+.sync{font-size:12px;color:var(--muted)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding-block:8px;border-bottom:1px solid var(--line);margin-bottom:16px}
+nav.tabs button{font:inherit;font-weight:700;border:0;background:transparent;color:var(--muted);padding:10px 2px;border-radius:8px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--court);color:var(--paper)}
+nav.tabs button#tab-coach[aria-selected="true"]{background:var(--clay)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--clay);outline-offset:2px}
+section.panel{display:flex;flex-direction:column;gap:20px}
+.block{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.block h2{margin:0;font-size:16px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;text-wrap:balance}
+.block h2 .sub{font-size:12px;font-weight:400;color:var(--muted)}
+.eyebrow{font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);flex:1 1 140px;min-width:0}
+input[type=date],input[type=text],input[type=number],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{min-height:64px;resize:vertical}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;border:0;background:var(--paper);color:var(--muted);padding:7px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--court-soft);color:var(--court);font-weight:700}
+.btn{font:inherit;font-weight:700;border:1px solid var(--court);background:var(--court);color:var(--paper);padding:9px 14px;border-radius:8px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--court)}
+.btn.warn{border-color:var(--low);background:transparent;color:var(--low)}
+.btn.small{padding:5px 10px;font-size:13px}
+/* skill counters */
+.skill{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding-block:10px;border-top:1px solid var(--line)}
+.skill:first-of-type{border-top:0;padding-top:0}
+.skill .name{font-weight:700}
+.skill .name small{font-weight:400;color:var(--muted);font-size:12px;margin-left:6px}
+.skill .rate{font-family:var(--f-num);font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.bar{grid-column:1/-1;height:6px;background:var(--line);border-radius:3px;position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:3px}
+.bar .tgt{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.45}
+.tap{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+.tap button{font:inherit;font-weight:700;font-size:16px;padding:12px 6px;border-radius:10px;cursor:pointer;border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.tap .ok{background:var(--court-soft);color:var(--court);border-color:transparent}
+.tap .ng{background:var(--clay-soft);color:var(--clay);border-color:transparent}
+.tap .undo{background:transparent;color:var(--muted);font-size:13px;padding-inline:12px}
+.tap button:active,.pt button:active{transform:scale(.97)}
+.c-good{color:var(--good)} .c-mid{color:var(--mid)} .c-low{color:var(--low)} .c-none{color:var(--muted)}
+.b-good{background:var(--good)} .b-mid{background:var(--mid)} .b-low{background:var(--low)}
+/* settings */
+details.set summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--court);list-style:none}
+details.set summary::-webkit-details-marker{display:none}
+details.set summary::before{content:"＋ ";}
+details.set[open] summary::before{content:"－ ";}
+.setrows{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.setrow{display:grid;grid-template-columns:minmax(0,1fr) 84px auto;gap:6px;align-items:center}
+.setrow .tg{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+.setrow input[type=number]{padding:6px 6px;text-align:right;font-family:var(--f-num)}
+/* points */
+.score{font-family:var(--f-num);font-weight:700;font-variant-numeric:tabular-nums;font-size:13px}
+.score .w{color:var(--court)} .score .l{color:var(--clay)}
+.pt{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pt .colh{font-size:12px;font-weight:700;letter-spacing:.08em;padding-bottom:2px}
+.pt .col{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pt button{font:inherit;font-size:13px;font-weight:700;padding:9px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent;text-align:left;display:flex;justify-content:space-between;gap:6px}
+.pt button span{font-family:var(--f-num);font-variant-numeric:tabular-nums;opacity:.8}
+.pt .win{background:var(--court-soft);color:var(--court)}
+.pt .lose{background:var(--clay-soft);color:var(--clay)}
+.pt .ext{background:transparent;border-color:var(--line);color:var(--muted)}
+.ptlog{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px}
+.ptlog .d{padding:2px 8px;border-radius:99px;font-weight:700}
+.ptlog .d.w{background:var(--court-soft);color:var(--court)} .ptlog .d.l{background:var(--clay-soft);color:var(--clay)}
+table.brk{width:100%;border-collapse:collapse;font-size:13px}
+table.brk td{padding:5px 4px;border-top:1px solid var(--line);vertical-align:middle}
+table.brk td.n{text-align:center;white-space:nowrap;padding-inline:8px}
+table.brk td.v{width:38%}
+.hb{display:flex;align-items:center;gap:6px;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.hb i{display:block;height:8px;border-radius:2px}
+.hb.l{justify-content:flex-end}
+table.brk th{font-size:11px;color:var(--muted);font-weight:700;padding:0 4px 4px}
+/* ratings */
+.rate5{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding-block:4px}
+.dots{display:flex;gap:4px}
+.dots button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--muted);font:inherit;font-family:var(--f-num);font-size:13px;cursor:pointer}
+.dots button[aria-pressed="true"]{background:var(--court);color:var(--paper);border-color:var(--court)}
+/* mental sliders */
+.slider{display:flex;flex-direction:column;gap:2px}
+.slider .hd{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.slider .hd b{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:18px}
+.slider input{width:100%;accent-color:var(--court)}
+.zone{font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;margin-left:6px}
+.zone.ok{background:var(--court-soft);color:var(--court)} .zone.hi{background:var(--clay-soft);color:var(--clay)} .zone.lo{background:var(--mid-soft);color:var(--mid)}
+.scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+/* breathing */
+.breath{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.orb{width:84px;height:84px;border-radius:50%;background:var(--court-soft);border:2px solid var(--court);display:grid;place-items:center;font-weight:700;color:var(--court);transform:scale(.7);transition:transform 4s ease-in-out}
+.orb.in{transform:scale(1)} .orb.hold{transform:scale(1)} .orb.out{transform:scale(.7);transition-duration:6s}
+@media (prefers-reduced-motion:reduce){.orb{transition:none}}
+.checks{display:flex;flex-direction:column;gap:6px}
+.chk{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:13px;padding:8px 10px;background:var(--bg);border-radius:8px}
+.chk .g{font-family:var(--f-num);font-weight:700}
+.chk .vals{font-family:var(--f-num);font-variant-numeric:tabular-nums;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.chk .adv{grid-column:1/-1;font-size:12px;color:var(--clay)}
+.xbtn{border:0;background:transparent;color:var(--muted);cursor:pointer;font:inherit;font-size:16px;padding:2px 6px}
+.note{font-size:13px;color:var(--muted);margin:0}
+/* history */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.tile .v{font-family:var(--f-num);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.tile .k{font-size:11px;color:var(--muted);letter-spacing:.06em}
+.chart{width:100%;overflow-x:auto}
+.chart svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.sess{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding-block:10px;border-top:1px solid var(--line)}
+.sess:first-child{border-top:0}
+.sess .t{font-weight:700;overflow-wrap:anywhere}
+.sess .m{font-size:12px;color:var(--muted);font-family:var(--f-num);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pill{font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;margin-right:6px;font-family:var(--f-body);white-space:nowrap}
+.pill.practice{background:var(--court-soft);color:var(--court)} .pill.match{background:var(--clay-soft);color:var(--clay)}
+.pill.alert{background:var(--clay-soft);color:var(--clay)} .pill.caution{background:var(--mid-soft);color:var(--mid)}
+.empty{text-align:center;padding:28px 12px;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+/* coach */
+.player{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.player[aria-pressed="true"]{border-color:var(--clay);box-shadow:inset 3px 0 0 var(--clay)}
+.player .nm{font-weight:700;overflow-wrap:anywhere}
+.player .st{font-family:var(--f-num);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;grid-column:1/-1}
+.plist{display:flex;flex-direction:column;gap:8px}
+.ro .notes{font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:99px;font-size:13px;z-index:20}
+@media (max-width:420px){.tiles .tile .v{font-size:18px}.dots button{width:30px;height:30px}nav.tabs button{font-size:13px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1 class="brand">ラリーノート<small>ソフトテニス 練習とメンタルの振り返り</small></h1>
+    <span class="sync" id="sync"></span>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-rec" aria-selected="true" data-tab="rec">練習記録</button>
+    <button role="tab" id="tab-mind" aria-selected="false" data-tab="mind">メンタル</button>
+    <button role="tab" id="tab-hist" aria-selected="false" data-tab="hist">振り返り</button>
+    <button role="tab" id="tab-coach" aria-selected="false" data-tab="coach" hidden>監督</button>
+  </nav>
+
+  <!-- 練習記録 -->
+  <section class="panel" id="p-rec">
+    <div class="block">
+      <div class="row" style="justify-content:space-between">
+        <span class="eyebrow" id="curLabel">今日の記録</span>
+        <button class="btn ghost small" id="newSess">新しい記録を始める</button>
+      </div>
+      <div class="row">
+        <label class="f">日付<input type="date" id="fDate"></label>
+        <label class="f">メニュー・相手<input type="text" id="fTitle" placeholder="例：乱打＋サーブ練習"></label>
+      </div>
+      <div class="row">
+        <div class="seg" id="kindSeg"><button data-v="practice">練習</button><button data-v="match">試合</button></div>
+        <div class="seg" id="posSeg"><button data-v="back">後衛</button><button data-v="front">前衛</button></div>
+      </div>
+    </div>
+
+    <div class="block">
+      <h2>技術の成功率 <span class="sub">○ 入った / × ミス をタップ</span></h2>
+      <div id="skills"></div>
+      <details class="set" id="setBox">
+        <summary>項目と目標を変える</summary>
+        <div class="setrows">
+          <label class="f">あなたの名前（監督の画面に表示されます）<input type="text" id="sName" placeholder="例：山田 太郎（後衛）"></label>
+          <p class="note">項目名と目標の成功率（%）を自由に変えられます。過去の記録は消えません。</p>
+          <div id="setSkills" class="setrows" style="margin-top:0"></div>
+          <div class="row"><button class="btn ghost small" id="addSkill">項目を追加</button><button class="btn ghost small" id="resetSkills">初期の8項目に戻す</button></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="block">
+      <h2>ポイント記録 <span class="score" id="ptScore"></span></h2>
+      <p class="note">試合やゲーム練習で、1ポイントごとに「どの球で決まったか」をタップします。</p>
+      <div class="row"><span class="note">打ったのは</span><div class="seg" id="bySeg"><button data-v="me">自分</button><button data-v="pair">ペア</button></div></div>
+      <div class="pt" id="pt"></div>
+      <div class="ptlog" id="ptLog"></div>
+      <div id="ptBreak"></div>
+    </div>
+
+    <div class="block">
+      <h2>戦術の自己評価 <span class="sub">1 できなかった 〜 5 できた</span></h2>
+      <div id="tactics"></div>
+    </div>
+
+    <div class="block">
+      <h2>練習後のふり返りメモ</h2>
+      <label class="f">よかったこと<textarea id="nGood" placeholder="例：バックの引っ張りが安定した"></textarea></label>
+      <label class="f">課題<textarea id="nIssue" placeholder="例：セカンドサーブが浅くなり攻められた"></textarea></label>
+      <label class="f">次回のテーマ<textarea id="nNext" placeholder="例：セカンドは回転量を増やして深く"></textarea></label>
+    </div>
+  </section>
+
+  <!-- メンタル -->
+  <section class="panel" id="p-mind" hidden>
+    <div class="block">
+      <h2>いまの心の状態 <span class="sub">記録中のセッションに保存</span></h2>
+      <div id="mental"></div>
+    </div>
+    <div class="block">
+      <h2>ゲーム間チェック <span class="sub">試合中、チェンジエンドごとに</span></h2>
+      <div class="row">
+        <label class="f" style="flex:0 1 110px">ゲーム<input type="text" id="cGame" placeholder="G3"></label>
+        <label class="f" style="flex:0 1 110px">カウント<input type="text" id="cScore" placeholder="2-1"></label>
+        <button class="btn" id="addCheck" style="align-self:flex-end">いまの状態を記録</button>
+      </div>
+      <p class="note">上の「いまの心の状態」の値をそのまま1行として残します。値を動かしてから押してください。</p>
+      <div class="checks" id="checks"></div>
+      <div class="chart" id="checkChart"></div>
+    </div>
+    <div class="block">
+      <h2>呼吸リセット <span class="sub">4秒吸う・2秒止める・6秒吐く ×3</span></h2>
+      <div class="breath">
+        <div class="orb" id="orb">準備</div>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+          <p class="note" id="breathText">ポイント間やゲーム間に。吐く息を長くすると、心拍が落ち着きやすくなります。</p>
+          <div><button class="btn" id="breathBtn">始める</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 振り返り -->
+  <section class="panel" id="p-hist" hidden>
+    <div class="panel" id="histRoot"></div>
+    <div class="block">
+      <h2>監督に送る・バックアップ</h2>
+      <p class="note">記録はこのスマホの中だけに保存されています。「監督に送る」でできたファイルをLINEやメールで監督に送ってください。同じファイルは、機種変更のときのバックアップにもなります。</p>
+      <div class="row"><button class="btn" id="sendCoach">監督に送る</button>
+        <label class="btn ghost" for="restoreFile" style="display:inline-block">バックアップから戻す</label>
+        <input type="file" id="restoreFile" accept=".json,application/json" hidden></div>
+      <label class="row" style="gap:8px;font-size:13px;color:var(--muted);cursor:pointer"><input type="checkbox" id="coachMode"> このスマホを監督用にも使う（「監督」タブを表示）</label>
+    </div>
+  </section>
+
+  <!-- 監督 -->
+  <section class="panel" id="p-coach" hidden>
+    <div class="block">
+      <h2>選手一覧 <label class="btn small" for="coachFiles" style="display:inline-block">選手のファイルを読み込む</label></h2>
+      <input type="file" id="coachFiles" accept=".json,application/json" multiple hidden>
+      <p class="note">選手から届いたファイル（.json）を読み込みます。複数まとめて選べます。同じ選手の新しいファイルを読み込むと上書きされます。選手をタップすると、その選手の振り返り画面を見られます（閲覧のみ）。直近の記録で緊張度が8以上、または集中力が4以下だと印が付きます。</p>
+      <div class="plist" id="coachList"></div>
+    </div>
+    <div class="panel ro" id="coachDetail"></div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const DEFAULT_SKILLS=[
+  {k:"serve1",n:"ファーストサーブ",t:70},
+  {k:"serve2",n:"セカンドサーブ",t:80},
+  {k:"receive",n:"レシーブ",t:70},
+  {k:"fore",n:"フォアストローク",t:70},
+  {k:"back",n:"バックストローク",t:60},
+  {k:"volley",n:"ボレー",t:70},
+  {k:"smash",n:"スマッシュ",t:70},
+  {k:"lob",n:"ロビング",t:70}
+];
+const TACTICS=[
+  {k:"course",n:"配球の意図（コース・深さ）"},
+  {k:"position",n:"ポジション取り"},
+  {k:"pair",n:"ペアとの連携・声かけ"},
+  {k:"flow",n:"試合の流れを読む"},
+  {k:"switch",n:"攻めと守りの切り替え"}
+];
+const MENTAL=[
+  {k:"focus",n:"集中力",lo:"散漫",hi:"没頭",col:"--court"},
+  {k:"tension",n:"緊張度",lo:"リラックス",hi:"ガチガチ",col:"--clay",zone:true},
+  {k:"role",n:"役割の明確さ",lo:"迷っている",hi:"はっきり",col:"--mid"},
+  {k:"breath",n:"呼吸の落ち着き",lo:"浅く速い",hi:"深く穏やか",col:"--good"},
+  {k:"confidence",n:"自信",lo:"不安",hi:"いける",col:"--muted"}
+];
+const OPP="opp";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const md=d=>d?d.slice(5).replace("-","/"):"";
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+/* ---------- settings (per player) ---------- */
+const SKEY="rallynote.settings.v1";
+const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let settings=lsGet(SKEY,null)||{name:"",skills:clone(DEFAULT_SKILLS)};
+const targetOf=(k,st=settings)=>st.skills.find(s=>s.k===k)?.t??70;
+
+function blank(){
+  const skills={};settings.skills.forEach(s=>skills[s.k]={ok:0,ng:0,n:s.n});
+  return {id:uid(),date:today(),title:"",kind:"practice",pos:"back",skills,tactics:{},points:[],
+    mental:{focus:6,tension:5,role:6,breath:6,confidence:6},checks:[],notes:{good:"",issue:"",next:""},updatedAt:Date.now()};
+}
+function normalize(s){
+  s.points=s.points||[];s.checks=s.checks||[];s.tactics=s.tactics||{};s.notes=s.notes||{good:"",issue:"",next:""};
+  s.skills=s.skills||{};for(const [k,v] of Object.entries(s.skills))if(!v.n)v.n=DEFAULT_SKILLS.find(d=>d.k===k)?.n||k;
+  return s;
+}
+
+/* ---------- storage: this device (localStorage) ---------- */
+const LKEY="rallynote.sessions.v1", CKEY="rallynote.current.v1", PKEY="rallynote.playerId", COACHKEY="rallynote.coach.players.v1", MODEKEY="rallynote.coachMode";
+let sessions=lsGet(LKEY,[]).map(normalize);
+let cur;{const cid=lsGet(CKEY,null);cur=sessions.find(s=>s.id===cid)||blank();}
+let myId=lsGet(PKEY,null);if(!myId){myId="p"+uid();lsSet(PKEY,myId)}
+
+function setSync(t){$("#sync").textContent=t}
+function upsertLocal(s){const i=sessions.findIndex(x=>x.id===s.id);if(i>=0)sessions[i]=s;else sessions.push(s);}
+function isEmpty(s){return !s.title&&!s.checks.length&&!s.points.length&&!Object.keys(s.tactics).length&&!Object.values(s.notes).some(Boolean)&&!Object.values(s.skills).some(v=>v.ok+v.ng)}
+
+let saveTimer=null;
+function touch(){
+  cur.updatedAt=Date.now();
+  if(!isEmpty(cur)) upsertLocal(clone(cur));
+  lsSet(CKEY,cur.id);
+  clearTimeout(saveTimer);saveTimer=setTimeout(persist,500);
+  if(!$("#p-hist").hidden) renderMyHist();
+}
+function persist(){
+  if(!isEmpty(cur)) upsertLocal(clone(cur));
+  try{localStorage.setItem(LKEY,JSON.stringify(sessions));setSync("このスマホに保存済み")}
+  catch(e){setSync("保存できませんでした。空き容量を確認してください")}
+}
+function saveSettings(){lsSet(SKEY,settings)}
+function removeSession(id){
+  sessions=sessions.filter(s=>s.id!==id);persist();
+  if(cur.id===id){cur=blank();renderAll();}
+  renderMyHist();toast("削除しました");
+}
+document.addEventListener("visibilitychange",()=>{if(document.hidden){clearTimeout(saveTimer);persist()}});
+setSync(sessions.length?"このスマホに保存済み":"このスマホに保存します");
+// ask the browser not to clear this app's data when space runs low
+try{navigator.storage?.persist?.()}catch(e){}
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+
+/* ---------- files: send to coach, backup, restore ---------- */
+async function offerFile(name,text,type){
+  const file=new File([text],name,{type});
+  try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:name});return}}catch(e){if(e.name==="AbortError")return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.append(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+}
+const safeName=s=>(s||"player").replace(/[\\/:*?"<>|\s]+/g,"_");
+function playerPack(){persist();return {app:"rallynote",v:1,playerId:myId,name:settings.name,settings:{skills:settings.skills},sessions:sortSess(sessions),exportedAt:Date.now()}}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  ["rec","mind","hist","coach"].forEach(t=>$("#p-"+t).hidden=t!==b.dataset.tab);
+  if(b.dataset.tab==="hist")renderMyHist();
+  if(b.dataset.tab==="coach")renderCoachList();
+  try{localStorage.setItem("rallynote.tab",b.dataset.tab)}catch(e){}
+  window.scrollTo({top:0});
+});
+
+/* ---------- record tab: skills ---------- */
+const rateOf=s=>{const n=s.ok+s.ng;return n?Math.round(s.ok/n*100):null};
+const band=(r,t=70)=>r==null?"none":r>=t?"good":r>=t-20?"mid":"low";
+function shownSkills(){
+  const list=settings.skills.map(s=>({k:s.k,n:s.n,t:s.t}));
+  for(const [k,v] of Object.entries(cur.skills)) if(!list.some(s=>s.k===k)&&v.ok+v.ng) list.push({k,n:v.n,t:70,old:true});
+  return list;
+}
+function renderSkills(){
+  $("#skills").innerHTML=shownSkills().map(s=>{
+    const v=cur.skills[s.k]||(cur.skills[s.k]={ok:0,ng:0,n:s.n}),r=rateOf(v),b=band(r,s.t);
+    return `<div class="skill" data-k="${esc(s.k)}">
+      <div class="name">${esc(s.n)}${s.old?"<small>（設定から外した項目）</small>":""}</div>
+      <div class="rate c-${b}">${r==null?"—":r+"%"} <span style="color:var(--muted);font-weight:500;font-size:12px">${v.ok}/${v.ok+v.ng}</span></div>
+      <div class="bar"><i class="b-${b}" style="width:${r||0}%"></i><span class="tgt" style="left:${s.t}%" title="目標${s.t}%"></span></div>
+      <div class="tap"><button class="ok" data-a="ok">○ 入った ${v.ok}</button><button class="ng" data-a="ng">× ミス ${v.ng}</button><button class="undo" data-a="undo" aria-label="${esc(s.n)}の直前の入力を取り消す">戻す</button></div>
+    </div>`}).join("");
+}
+const lastTap={};
+$("#skills").addEventListener("click",e=>{
+  const btn=e.target.closest("button[data-a]");if(!btn)return;
+  const k=btn.closest(".skill").dataset.k,v=cur.skills[k],a=btn.dataset.a;
+  if(a==="undo"){const l=lastTap[k]?.pop();if(l&&v[l]>0)v[l]--;}
+  else{v[a]++;(lastTap[k]=lastTap[k]||[]).push(a);try{navigator.vibrate?.(12)}catch(_){}}
+  renderSkills();touch();
+});
+
+/* ---------- settings editor ---------- */
+function renderSettings(){
+  $("#sName").value=settings.name||"";
+  $("#setSkills").innerHTML=settings.skills.map((s,i)=>`<div class="setrow" data-i="${i}">
+    <input type="text" id="sk-n-${esc(s.k)}" value="${esc(s.n)}" aria-label="項目名">
+    <span class="tg"><input type="number" id="sk-t-${esc(s.k)}" min="0" max="100" step="5" value="${s.t}" aria-label="${esc(s.n)}の目標%">%</span>
+    <button class="xbtn" data-del="${i}" aria-label="${esc(s.n)}を外す">×</button></div>`).join("");
+}
+$("#sName").oninput=e=>{settings.name=e.target.value;saveSettings()};
+$("#setSkills").addEventListener("input",e=>{
+  const row=e.target.closest(".setrow");if(!row)return;const s=settings.skills[+row.dataset.i];
+  if(e.target.type==="number"){const v=Math.max(0,Math.min(100,+e.target.value||0));s.t=v}
+  else{s.n=e.target.value;if(cur.skills[s.k])cur.skills[s.k].n=s.n;touch();}
+  saveSettings();renderSkills();renderPoints();
+});
+$("#setSkills").addEventListener("click",e=>{
+  const b=e.target.closest("[data-del]");if(!b)return;
+  if(settings.skills.length<=1){toast("項目は1つ以上必要です");return}
+  settings.skills.splice(+b.dataset.del,1);saveSettings();renderSettings();renderSkills();renderPoints();
+});
+$("#addSkill").onclick=()=>{
+  const k="c"+uid();settings.skills.push({k,n:"新しい項目",t:70});cur.skills[k]={ok:0,ng:0,n:"新しい項目"};
+  saveSettings();renderSettings();renderSkills();renderPoints();
+  const el=document.getElementById("sk-n-"+k);el?.focus();el?.select();
+};
+$("#resetSkills").onclick=()=>{settings.skills=clone(DEFAULT_SKILLS);DEFAULT_SKILLS.forEach(s=>{if(!cur.skills[s.k])cur.skills[s.k]={ok:0,ng:0,n:s.n}});saveSettings();renderSettings();renderSkills();renderPoints();toast("初期の8項目に戻しました")};
+
+/* ---------- points ---------- */
+let ptBy="me";
+const shotName=(k,s=cur,st=settings)=>k===OPP?null:(s.skills[k]?.n||st.skills.find(x=>x.k===k)?.n||k);
+function pointLabel(p,s=cur,st=settings){
+  if(p.k===OPP)return p.w?"相手のミス":"相手に決められた";
+  return shotName(p.k,s,st)+(p.by==="pair"?"（ペア）":"")+(p.w?"":" ミス");
+}
+function renderPoints(){
+  const pts=cur.points,w=pts.filter(p=>p.w).length,l=pts.length-w;
+  $("#ptScore").innerHTML=pts.length?`<span class="w">得点 ${w}</span> ・ <span class="l">失点 ${l}</span>`:"";
+  const cnt=(k,win)=>pts.filter(p=>p.k===k&&!!p.w===win).length;
+  const sk=settings.skills;
+  $("#pt").innerHTML=`<div class="col"><div class="colh" style="color:var(--court)">得点した球</div>
+      ${sk.map(s=>`<button class="win" data-w="1" data-k="${esc(s.k)}">${esc(s.n)}<span>${cnt(s.k,true)}</span></button>`).join("")}
+      <button class="ext" data-w="1" data-k="${OPP}">相手のミス<span>${cnt(OPP,true)}</span></button></div>
+    <div class="col"><div class="colh" style="color:var(--clay)">失点した球（ミス）</div>
+      ${sk.map(s=>`<button class="lose" data-w="0" data-k="${esc(s.k)}">${esc(s.n)}<span>${cnt(s.k,false)}</span></button>`).join("")}
+      <button class="ext" data-w="0" data-k="${OPP}">相手に決められた<span>${cnt(OPP,false)}</span></button></div>`;
+  const last=pts.slice(-6);
+  $("#ptLog").innerHTML=pts.length?`<span class="note">直近：</span>${last.map(p=>`<span class="d ${p.w?"w":"l"}">${esc(pointLabel(p))}</span>`).join("")}<button class="btn ghost small" id="ptUndo" style="margin-left:auto">1つ戻す</button>`:"";
+  $("#ptBreak").innerHTML=pts.length?breakdown([cur],settings):"";
+}
+function breakdown(ss,st){
+  const rows=new Map();
+  ss.forEach(s=>s.points.forEach(p=>{
+    const key=p.k===OPP?OPP:p.k;
+    if(!rows.has(key))rows.set(key,{n:p.k===OPP?"相手（ミス／決められた）":shotName(p.k,s,st),w:0,l:0});
+    rows.get(key)[p.w?"w":"l"]++;
+  }));
+  if(!rows.size)return "";
+  const list=[...rows.values()].sort((a,b)=>(b.w+b.l)-(a.w+a.l)),mx=Math.max(...list.map(r=>Math.max(r.w,r.l)));
+  const wd=v=>Math.round(v/mx*100);
+  return `<div style="overflow-x:auto"><table class="brk"><thead><tr><th style="text-align:right">失点</th><th></th><th style="text-align:left">得点</th></tr></thead><tbody>${list.map(r=>`<tr>
+    <td class="v"><div class="hb l">${r.l}<i style="width:${wd(r.l)}%;background:var(--clay)"></i></div></td>
+    <td class="n">${esc(r.n)}</td>
+    <td class="v"><div class="hb"><i style="width:${wd(r.w)}%;background:var(--court)"></i>${r.w}</div></td></tr>`).join("")}</tbody></table></div>`;
+}
+$("#pt").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-k]");if(!b)return;
+  const k=b.dataset.k,w=b.dataset.w==="1"?1:0;
+  cur.points.push({w,k,by:k===OPP?null:ptBy});
+  try{navigator.vibrate?.(12)}catch(_){}
+  renderPoints();touch();
+});
+$("#ptLog").addEventListener("click",e=>{if(e.target.id==="ptUndo"){cur.points.pop();renderPoints();touch()}});
+$("#bySeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;ptBy=b.dataset.v;paintBy()};
+const paintBy=()=>$("#bySeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===ptBy));
+
+/* ---------- tactics / meta ---------- */
+function renderTactics(){
+  $("#tactics").innerHTML=TACTICS.map(t=>`<div class="rate5" data-k="${t.k}"><span>${t.n}</span><div class="dots">${[1,2,3,4,5].map(n=>`<button aria-pressed="${cur.tactics[t.k]===n}" data-n="${n}" aria-label="${t.n} ${n}">${n}</button>`).join("")}</div></div>`).join("");
+}
+$("#tactics").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-n]");if(!b)return;
+  const k=b.closest(".rate5").dataset.k,n=+b.dataset.n;
+  if(cur.tactics[k]===n)delete cur.tactics[k];else cur.tactics[k]=n;
+  renderTactics();touch();
+});
+function segInit(id,key){
+  const el=$(id);
+  const paint=()=>el.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===cur[key]));
+  el.onclick=e=>{const b=e.target.closest("button");if(!b)return;cur[key]=b.dataset.v;paint();touch();};
+  return paint;
+}
+const paintKind=segInit("#kindSeg","kind"),paintPos=segInit("#posSeg","pos");
+$("#fDate").oninput=e=>{cur.date=e.target.value;touch()};
+$("#fTitle").oninput=e=>{cur.title=e.target.value;touch()};
+[["#nGood","good"],["#nIssue","issue"],["#nNext","next"]].forEach(([s,k])=>$(s).oninput=e=>{cur.notes[k]=e.target.value;touch()});
+$("#newSess").onclick=()=>{persist();cur=blank();lsSet(CKEY,cur.id);renderAll();toast("新しい記録を始めました");window.scrollTo({top:0})};
+
+/* ---------- mental tab ---------- */
+function tensionZone(v){return v<=3?["lo","低すぎ：気持ちを上げる"]:v>=8?["hi","高すぎ：呼吸で下げる"]:["ok","ちょうど良い"]}
+function renderMental(){
+  $("#mental").innerHTML=MENTAL.map(m=>{
+    const v=cur.mental[m.k];const z=m.zone?tensionZone(v):null;
+    return `<div class="slider"><div class="hd"><label for="m-${m.k}">${m.n}${z?`<span class="zone ${z[0]}" id="z-${m.k}">${z[1]}</span>`:""}</label><b id="v-${m.k}">${v}</b></div>
+      <input type="range" min="0" max="10" step="1" id="m-${m.k}" value="${v}">
+      <div class="scale"><span>0 ${m.lo}</span>${m.zone?"<span>4〜7 が理想帯</span>":""}<span>${m.hi} 10</span></div></div>`}).join("");
+  MENTAL.forEach(m=>$("#m-"+m.k).oninput=e=>{
+    const v=+e.target.value;cur.mental[m.k]=v;$("#v-"+m.k).textContent=v;
+    if(m.zone){const z=tensionZone(v),el=$("#z-"+m.k);el.className="zone "+z[0];el.textContent=z[1];}
+    touch();
+  });
+}
+function advice(c){
+  const a=[];
+  if(c.tension>=8)a.push("緊張が高め。吐く息を長く、ラケットを握る力を抜く");
+  if(c.tension<=3)a.push("気持ちが下がり気味。足を動かし、声を出して上げる");
+  if(c.focus<=4)a.push("次の1球だけに集中。狙うコースを1つ決める");
+  if(c.role<=4)a.push("ペアと役割を確認：誰が攻めて誰がつなぐか");
+  if(c.breath<=4)a.push("呼吸リセットを1回入れてからコートへ");
+  return a.join(" ／ ");
+}
+function renderChecks(){
+  const cs=cur.checks;
+  $("#checks").innerHTML=cs.length?cs.map((c,i)=>{const ad=advice(c);return `<div class="chk"><span class="g">${esc(c.game||"#"+(i+1))}${c.score?` <span style="color:var(--muted);font-weight:500">${esc(c.score)}</span>`:""}</span>
+    <span class="vals">集${c.focus} 緊${c.tension} 役${c.role} 呼${c.breath} 自${c.confidence}</span><button class="xbtn" data-i="${i}" aria-label="この行を削除">×</button>${ad?`<span class="adv">${ad}</span>`:""}</div>`}).join("")
+    :`<div class="empty"><b>まだチェックはありません</b>ゲームの合間に、上の値を動かして「いまの状態を記録」を押すと、ここに並びます。</div>`;
+  $("#checkChart").innerHTML=cs.length>=2?lineChart(cs.map((c,i)=>c.game||"#"+(i+1)),MENTAL.slice(0,4).map(m=>({name:m.n,col:m.col,vals:cs.map(c=>c[m.k])})),{max:10,band:[4,7]}):"";
+}
+$("#checks").addEventListener("click",e=>{const b=e.target.closest(".xbtn");if(!b)return;cur.checks.splice(+b.dataset.i,1);renderChecks();touch()});
+$("#addCheck").onclick=()=>{
+  const g=$("#cGame").value.trim()||("G"+(cur.checks.length+1));
+  cur.checks.push({game:g,score:$("#cScore").value.trim(),...cur.mental,t:Date.now()});
+  const m=g.match(/^(\D*)(\d+)$/);$("#cGame").value=m?m[1]+(+m[2]+1):"";$("#cScore").value="";
+  renderChecks();touch();toast(g+" を記録しました");
+};
+let breathing=false;
+$("#breathBtn").onclick=async()=>{
+  if(breathing){breathing=false;return}
+  breathing=true;$("#breathBtn").textContent="やめる";
+  const orb=$("#orb"),txt=$("#breathText"),steps=[["in","吸う",4],["hold","止める",2],["out","吐く",6]];
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  try{const wl=await navigator.wakeLock?.request("screen");setTimeout(()=>wl?.release?.(),40000)}catch(e){}
+  outer:for(let c=1;c<=3;c++){for(const [cls,lab,sec] of steps){
+    if(!breathing)break outer;orb.className="orb "+cls;
+    for(let s=sec;s>0;s--){if(!breathing)break outer;orb.textContent=lab+" "+s;txt.textContent=`${c}回目／3　${lab}`;await wait(1000);}
+  }}
+  orb.className="orb";orb.textContent="準備";txt.textContent=breathing?"おつかれさま。いまの状態を上で確認しておきましょう。":"ポイント間やゲーム間に。吐く息を長くすると、心拍が落ち着きやすくなります。";
+  breathing=false;$("#breathBtn").textContent="始める";
+};
+
+/* ---------- charts ---------- */
+function lineChart(labels,series,opt){
+  const W=600,H=200,L=34,R=12,T=12,B=28,max=opt.max,n=labels.length;
+  const x=i=>n===1?L+(W-L-R)/2:L+i*(W-L-R)/(n-1),y=v=>T+(1-v/max)*(H-T-B);
+  const css=v=>`var(${v})`;
+  let g="";
+  if(opt.band)g+=`<rect x="${L}" y="${y(opt.band[1])}" width="${W-L-R}" height="${y(opt.band[0])-y(opt.band[1])}" fill="var(--court-soft)"/>`;
+  (max===100?[0,25,50,75,100]:[0,5,10]).forEach(t=>g+=`<line x1="${L}" x2="${W-R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="JetBrains Mono,monospace">${t}</text>`);
+  if(opt.target!=null)g+=`<line x1="${L}" x2="${W-R}" y1="${y(opt.target)}" y2="${y(opt.target)}" stroke="var(--ink)" stroke-dasharray="4 4" opacity=".45"/><text x="${W-R}" y="${y(opt.target)-5}" text-anchor="end" font-size="11" fill="var(--muted)">目標 ${opt.target}%</text>`;
+  const step=Math.ceil(n/7);
+  labels.forEach((l,i)=>{if(i%step===0||i===n-1)g+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)">${esc(l)}</text>`});
+  series.forEach(s=>{
+    const pts=s.vals.map((v,i)=>v==null?null:[x(i),y(v)]).filter(Boolean);
+    if(pts.length>1)g+=`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="${css(s.col)}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    pts.forEach((p,j)=>g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${j===pts.length-1?4.5:3}" fill="${css(s.col)}" stroke="var(--paper)" stroke-width="1.5"/>`);
+  });
+  const leg=series.length>1?`<div class="legend">${series.map(s=>`<span><i style="background:${css(s.col)}"></i>${s.name}</span>`).join("")}${opt.band?`<span><i style="background:var(--court-soft);height:10px"></i>理想帯（緊張度）</span>`:""}</div>`:"";
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="推移グラフ">${g}</svg>${leg}`;
+}
+
+/* ---------- history (shared by player view and coach view) ---------- */
+const sortSess=list=>[...list].filter(s=>!isEmpty(s)).sort((a,b)=>(a.date+a.updatedAt).localeCompare(b.date+b.updatedAt));
+function totals(s,k){if(k!=="all")return s.skills[k]||{ok:0,ng:0};return Object.values(s.skills).reduce((a,v)=>({ok:a.ok+v.ok,ng:a.ng+v.ng}),{ok:0,ng:0})}
+function skillKeys(ss,st){
+  const m=new Map(st.skills.map(s=>[s.k,s.n]));
+  ss.forEach(s=>Object.entries(s.skills).forEach(([k,v])=>{if(!m.has(k)&&v.ok+v.ng)m.set(k,v.n)}));
+  return [...m.entries()].map(([k,n])=>({k,n}));
+}
+function histShell(root,ro){
+  root.innerHTML=`<div class="tiles" data-r="tiles"></div>
+    <div class="block"><h2>成功率の推移 <select data-r="skill" style="width:auto;font-size:13px;padding:4px 8px" aria-label="技術を選ぶ"></select></h2><div class="chart" data-r="trend"></div></div>
+    <div class="block"><h2>得点と失点の内訳 <span class="sub">全記録の合計</span></h2><div data-r="brk"></div></div>
+    <div class="block"><h2>メンタルの推移</h2><div class="chart" data-r="mind"></div></div>
+    <div class="block"><h2>記録の一覧 <button class="btn ghost small" data-a="csv">CSVで書き出す</button></h2><div data-r="list"></div></div>`;
+  root.dataset.ro=ro?"1":"";
+}
+function renderHist(root,ss,st,ro){
+  if(!root.querySelector("[data-r=tiles]"))histShell(root,ro);
+  const q=r=>root.querySelector(`[data-r=${r}]`);
+  const sel=q("skill"),keys=skillKeys(ss,st),prev=sel.value||root.dataset.skill||"all";
+  sel.innerHTML=`<option value="all">全技術の合計</option>`+keys.map(s=>`<option value="${esc(s.k)}">${esc(s.n)}</option>`).join("");
+  sel.value=[...sel.options].some(o=>o.value===prev)?prev:"all";
+  const k=sel.value;
+  const all=ss.reduce((a,s)=>{const t=totals(s,"all");return{ok:a.ok+t.ok,ng:a.ng+t.ng}},{ok:0,ng:0});
+  const r=rateOf(all),recent=ss.slice(-5).map(s=>s.mental.focus);
+  const pw=ss.reduce((a,s)=>a+s.points.filter(p=>p.w).length,0),pl=ss.reduce((a,s)=>a+s.points.filter(p=>!p.w).length,0);
+  q("tiles").innerHTML=`<div class="tile"><div class="k">記録数</div><div class="v">${ss.length}</div></div>
+    <div class="tile"><div class="k">通算成功率</div><div class="v c-${band(r)}">${r==null?"—":r+"%"}</div></div>
+    <div class="tile"><div class="k">直近5回 集中力</div><div class="v">${recent.length?(recent.reduce((a,b)=>a+b,0)/recent.length).toFixed(1):"—"}</div></div>`;
+  const withData=ss.filter(s=>{const t=totals(s,k);return t.ok+t.ng>0});
+  q("trend").innerHTML=withData.length?lineChart(withData.map(s=>md(s.date)),[{name:"成功率",col:"--court",vals:withData.map(s=>rateOf(totals(s,k)))}],{max:100,target:k==="all"?null:targetOf(k,st)})
+    :`<div class="empty"><b>グラフはまだありません</b>「練習記録」で○×をタップすると、記録ごとの成功率がここに線で並びます。</div>`;
+  q("brk").innerHTML=pw+pl?`<p class="note">得点 ${pw} ・ 失点 ${pl}（得点率 ${Math.round(pw/(pw+pl)*100)}%）</p>`+breakdown(ss,st)
+    :`<div class="empty"><b>ポイントの記録はまだありません</b>「練習記録」のポイント記録で、得点・失点をタップすると内訳が出ます。</div>`;
+  q("mind").innerHTML=ss.length?lineChart(ss.map(s=>md(s.date)),MENTAL.slice(0,4).map(m=>({name:m.n,col:m.col,vals:ss.map(s=>s.mental[m.k])})),{max:10,band:[4,7]})
+    :`<div class="empty"><b>メンタルの記録はまだありません</b>「メンタル」タブで集中力・緊張度などを入れると推移が見られます。</div>`;
+  q("list").innerHTML=ss.length?[...ss].reverse().map(s=>{const t=totals(s,"all"),rr=rateOf(t),w=s.points.filter(p=>p.w).length,l=s.points.length-w;
+    const notes=ro?[["よかった",s.notes.good],["課題",s.notes.issue],["次回",s.notes.next]].filter(x=>x[1]).map(x=>`<b>${x[0]}：</b>${esc(x[1])}`).join("\n"):(s.notes.next?"次回："+esc(s.notes.next):"");
+    return `<div class="sess" data-id="${esc(s.id)}"><div class="t"><span class="pill ${s.kind==="match"?"match":"practice"}">${s.kind==="match"?"試合":"練習"}</span>${esc(s.title||"（無題）")}</div>
+      ${ro?"<span></span>":`<div class="row" style="gap:6px;justify-content:flex-end"><button class="btn ghost small" data-a="open">開く</button><button class="btn warn small" data-a="del">削除</button></div>`}
+      <div class="m" style="grid-column:1/-1">${esc(s.date)}　${s.pos==="front"?"前衛":"後衛"}　成功率 ${rr==null?"—":rr+"%"}（${t.ok}/${t.ok+t.ng}）${s.points.length?`　得${w}-失${l}`:""}　集中${s.mental.focus} 緊張${s.mental.tension}</div>
+      ${notes?`<div class="notes" style="grid-column:1/-1">${notes}</div>`:""}</div>`}).join("")
+    :`<div class="empty"><b>記録はまだありません</b>「練習記録」タブで今日のメニューを入力し、○×をタップすると自動で保存されます。</div>`;
+  root._ctx={ss,st};
+}
+function wireHist(root,onChange){
+  root.addEventListener("change",e=>{if(e.target.dataset.r==="skill"){root.dataset.skill=e.target.value;onChange()}});
+  root.addEventListener("click",async e=>{
+    const b=e.target.closest("button[data-a]");if(!b)return;
+    if(b.dataset.a==="csv"){exportCsv(root._ctx.ss,root._ctx.st,root.dataset.fname||"rallynote");return}
+    const id=b.closest(".sess")?.dataset.id,s=sessions.find(x=>x.id===id);
+    if(b.dataset.a==="open"&&s){persist();cur=clone(s);lsSet(CKEY,cur.id);renderAll();$("#tab-rec").click();toast(md(s.date)+" の記録を開きました");}
+    if(b.dataset.a==="del"){
+      if(b.dataset.confirm)removeSession(id);
+      else{b.dataset.confirm="1";b.textContent="本当に削除";setTimeout(()=>{if(b.isConnected){delete b.dataset.confirm;b.textContent="削除"}},4000)}
+    }
+  });
+}
+const histRoot=$("#histRoot");
+function renderMyHist(){renderHist(histRoot,sortSess(sessions),settings,false)}
+wireHist(histRoot,renderMyHist);
+
+async function exportCsv(ss,st,fname){
+  const keys=skillKeys(ss,st);
+  const head=["日付","種別","ポジション","メニュー",...keys.flatMap(s=>[s.n+"成功",s.n+"ミス"]),"得点","失点",...TACTICS.map(t=>t.n),...MENTAL.map(m=>m.n),"よかったこと","課題","次回のテーマ"];
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const rows=ss.map(s=>{const w=s.points.filter(p=>p.w).length;return [s.date,s.kind==="match"?"試合":"練習",s.pos==="front"?"前衛":"後衛",s.title,...keys.flatMap(k=>[s.skills[k.k]?.ok??0,s.skills[k.k]?.ng??0]),w,s.points.length-w,...TACTICS.map(t=>s.tactics[t.k]??""),...MENTAL.map(m=>s.mental[m.k]),s.notes.good,s.notes.issue,s.notes.next].map(q).join(",")});
+  offerFile(`${fname}_${today()}.csv`,"﻿"+[head.map(q).join(","),...rows].join("\n"),"text/csv");
+}
+
+/* ---------- send to coach / backup / restore ---------- */
+$("#sendCoach").onclick=()=>{
+  if(!settings.name){toast("先に「項目と目標を変える」で名前を入れてください");$("#tab-rec").click();$("#setBox").open=true;$("#sName").focus();return}
+  offerFile(`rallynote_${safeName(settings.name)}_${today()}.json`,JSON.stringify(playerPack()),"application/json");
+};
+$("#restoreFile").onchange=async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  try{
+    const d=JSON.parse(await f.text());
+    if(d.app!=="rallynote"||!Array.isArray(d.sessions))throw 0;
+    const byId=new Map(sessions.map(s=>[s.id,s]));let n=0;
+    d.sessions.map(normalize).forEach(s=>{const m=byId.get(s.id);if(!m||s.updatedAt>m.updatedAt){byId.set(s.id,s);n++}});
+    sessions=[...byId.values()];
+    if(d.playerId===myId||!settings.name){if(d.settings?.skills?.length)settings.skills=d.settings.skills;if(d.name&&!settings.name)settings.name=d.name;saveSettings();}
+    persist();renderAll();renderMyHist();toast(`${n}件の記録を読み込みました`);
+  }catch(_){toast("ラリーノートのファイルではないようです")}
+};
+
+/* ---------- coach view (files sent by players) ---------- */
+let players=lsGet(COACHKEY,[]),selPlayer=null;
+const coachDetail=$("#coachDetail");
+wireHist(coachDetail,()=>{const p=players.find(x=>x.id===selPlayer);if(p)renderHist(coachDetail,p.ss.map(normalize),p.st,true)});
+function saveCoach(){try{localStorage.setItem(COACHKEY,JSON.stringify(players))}catch(e){toast("保存できませんでした。古い選手を外してください")}}
+$("#coachFiles").onchange=async e=>{
+  const files=[...e.target.files];e.target.value="";let ok=0,bad=0;
+  for(const f of files){
+    try{
+      const d=JSON.parse(await f.text());
+      if(d.app!=="rallynote"||!Array.isArray(d.sessions)||!d.playerId)throw 0;
+      const p={id:d.playerId,name:d.name||"",st:{skills:d.settings?.skills||clone(DEFAULT_SKILLS)},ss:sortSess(d.sessions.map(normalize)),receivedAt:d.exportedAt||Date.now()};
+      const i=players.findIndex(x=>x.id===p.id);
+      if(i<0)players.push(p);else if(p.receivedAt>=(players[i].receivedAt||0))players[i]=p;
+      ok++;
+    }catch(_){bad++}
+  }
+  players.sort((a,b)=>(b.ss.at(-1)?.date||"").localeCompare(a.ss.at(-1)?.date||""));
+  saveCoach();renderCoachList();
+  toast(bad?`${ok}人分を読み込み、${bad}件は読み込めませんでした`:`${ok}人分を読み込みました`);
+};
+function renderCoachList(){
+  const list=$("#coachList");
+  if(!players.length){list.innerHTML=`<div class="empty"><b>まだ選手のファイルがありません</b>選手が「振り返り」タブの「監督に送る」で送ったファイルを、上のボタンから読み込むと一人ずつ並びます。</div>`;return}
+  list.innerHTML=players.map((p,i)=>{
+    const last=p.ss.at(-1),all=p.ss.reduce((a,s)=>{const t=totals(s,"all");return{ok:a.ok+t.ok,ng:a.ng+t.ng}},{ok:0,ng:0}),r=rateOf(all);
+    const flags=last?[last.mental.tension>=8?`<span class="pill alert">緊張高め</span>`:"",last.mental.focus<=4?`<span class="pill caution">集中低下</span>`:""].join(""):"";
+    return `<div style="display:flex;flex-direction:column;gap:4px"><button class="player" data-id="${esc(p.id)}" aria-pressed="${p.id===selPlayer}">
+      <span class="nm">${esc(p.name||"選手 "+(i+1))}</span><span>${flags}</span>
+      <span class="st">記録 ${p.ss.length}件　最終 ${last?esc(last.date):"—"}　通算成功率 ${r==null?"—":r+"%"}${last?`　直近 集中${last.mental.focus}・緊張${last.mental.tension}`:""}<br>受け取り ${new Date(p.receivedAt).toLocaleDateString("ja-JP")}</span></button>
+      <div style="text-align:right"><button class="xbtn" data-rm="${esc(p.id)}" style="font-size:12px">一覧から外す</button></div></div>`}).join("");
+}
+$("#coachList").addEventListener("click",e=>{
+  const rm=e.target.closest("[data-rm]");
+  if(rm){
+    if(rm.dataset.confirm){players=players.filter(x=>x.id!==rm.dataset.rm);if(selPlayer===rm.dataset.rm){selPlayer=null;coachDetail.innerHTML=""}saveCoach();renderCoachList();toast("一覧から外しました")}
+    else{rm.dataset.confirm="1";rm.textContent="本当に外す";setTimeout(()=>{if(rm.isConnected){delete rm.dataset.confirm;rm.textContent="一覧から外す"}},4000)}
+    return;
+  }
+  const b=e.target.closest(".player");if(!b)return;
+  selPlayer=b.dataset.id;renderCoachList();
+  const p=players.find(x=>x.id===selPlayer);
+  coachDetail.innerHTML="";coachDetail.dataset.fname="rallynote_"+safeName(p.name);
+  const h=document.createElement("div");h.className="eyebrow";h.textContent=(p.name||"選手")+" の振り返り（閲覧のみ）";
+  renderHist(coachDetail,p.ss.map(normalize),p.st,true);coachDetail.prepend(h);
+  h.scrollIntoView({behavior:"smooth",block:"start"});
+});
+const coachToggle=$("#coachMode");
+function applyCoachMode(){const on=lsGet(MODEKEY,false);coachToggle.checked=on;$("#tab-coach").hidden=!on;if(!on&&!$("#p-coach").hidden)$("#tab-rec").click()}
+coachToggle.onchange=()=>{lsSet(MODEKEY,coachToggle.checked);applyCoachMode();if(coachToggle.checked)toast("「監督」タブを表示しました")};
+
+/* ---------- shared ---------- */
+let toastT;function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,1800)}
+function renderAll(){
+  normalize(cur);
+  settings.skills.forEach(s=>{if(!cur.skills[s.k])cur.skills[s.k]={ok:0,ng:0,n:s.n}});
+  $("#fDate").value=cur.date;$("#fTitle").value=cur.title;$("#nGood").value=cur.notes.good;$("#nIssue").value=cur.notes.issue;$("#nNext").value=cur.notes.next;
+  $("#curLabel").textContent=cur.date===today()?"今日の記録":md(cur.date)+" の記録を編集中";
+  paintKind();paintPos();paintBy();renderSkills();renderSettings();renderPoints();renderTactics();renderMental();renderChecks();
+}
+renderAll();
+applyCoachMode();
+try{const t=localStorage.getItem("rallynote.tab");if(t&&t!=="rec"&&!$("#tab-"+t)?.hidden)$("#tab-"+t)?.click()}catch(e){}
+</script>
+</body>
+</html>

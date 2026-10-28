@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#23805a"/><stop offset="1" stop-color="#155238"/>
+    </linearGradient>
+    <radialGradient id="ball" cx="0.38" cy="0.34" r="0.7">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="0.75" stop-color="#f1f3ef"/><stop offset="1" stop-color="#d6dcd6"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- court: baseline, service line and centre line seen from behind -->
+  <g stroke="#ffffff" stroke-opacity="0.28" stroke-width="14" fill="none" stroke-linecap="round">
+    <path d="M150 900 L330 560 L694 560 L874 900"/>
+    <path d="M232 745 L792 745"/>
+    <path d="M512 560 L512 745"/>
+  </g>
+  <!-- net -->
+  <path d="M300 600 L724 600" stroke="#ffffff" stroke-opacity="0.55" stroke-width="10" stroke-linecap="round"/>
+  <!-- rally arc -->
+  <path d="M230 820 C 330 330, 600 210, 700 330" stroke="#e58a5c" stroke-width="30" fill="none" stroke-linecap="round" stroke-dasharray="2 58"/>
+  <!-- soft tennis ball -->
+  <circle cx="726" cy="300" r="142" fill="url(#ball)"/>
+  <!-- check mark: the reflection -->
+  <path d="M664 304 L712 352 L796 256" stroke="#1d6b47" stroke-width="34" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
